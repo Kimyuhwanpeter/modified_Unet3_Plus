@@ -9,7 +9,7 @@ import numpy as np
 import easydict
 import os
 
-FLAGS = easydict.EasyDict({"img_size": 448,
+FLAGS = easydict.EasyDict({"img_size": 512,
 
                            "train_txt_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/train_fix.txt",
 
@@ -56,7 +56,7 @@ FLAGS = easydict.EasyDict({"img_size": 448,
                            "test_images": "C:/Users/Yuhwan/Downloads/test_images",
 
                            "train": True})
-
+# low parameter version
 optim = tf.keras.optimizers.Adam(FLAGS.lr)
 color_map = np.array([[0, 0, 0],[255,0,0]], np.uint8)
 
@@ -97,14 +97,14 @@ def test_func(image_list, label_list):
 
     img = tf.io.read_file(image_list)
     img = tf.image.decode_jpeg(img, 3)
-    img = tf.image.resize(img, [1024, 1024])
+    img = tf.image.resize(img, [FLAGS.img_size, FLAGS.img_size])
     #img = tf.clip_by_value(img, 0, 255)
     # img = img[:, :, ::-1] - tf.constant([103.939, 116.779, 123.68])
     img = img / 255.
 
     lab = tf.io.read_file(label_list)
     lab = tf.image.decode_jpeg(lab, 1)
-    lab = tf.image.resize(lab, [1024, 1024], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    lab = tf.image.resize(lab, [FLAGS.img_size, FLAGS.img_size], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
     lab = tf.image.convert_image_dtype(lab, tf.uint8)
 
     return img, lab
@@ -185,10 +185,10 @@ def cal_loss(model, batch_images, batch_labels, object_buf):
     with tf.GradientTape() as tape:
         final, sub_1, sub_2, sub_3, sub_4 = run_model(model, batch_images, True)
 
-        loss_1 = hybrid_loss(batch_labels, sub_1, object_buf[1]) * 0.25
-        loss_2 = hybrid_loss(batch_labels, sub_2, object_buf[1]) * 0.25
-        loss_3 = hybrid_loss(batch_labels, sub_3, object_buf[1]) * 0.25
-        loss_4 = hybrid_loss(batch_labels, sub_4, object_buf[1]) * 0.25
+        loss_1 = hybrid_loss(batch_labels, sub_1, object_buf[1]) * 1
+        loss_2 = hybrid_loss(batch_labels, sub_2, object_buf[1]) * 1
+        loss_3 = hybrid_loss(batch_labels, sub_3, object_buf[1]) * 1
+        loss_4 = hybrid_loss(batch_labels, sub_4, object_buf[1]) * 1
         loss_5 = hybrid_loss(batch_labels, final, object_buf[1]) * 1
 
         total_loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_5
