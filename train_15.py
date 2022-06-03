@@ -7,26 +7,27 @@ from Cal_measurement import *
 import matplotlib.pyplot as plt
 import numpy as np
 import easydict
+import os
 
-FLAGS = easydict.EasyDict({"img_size": 512,
+FLAGS = easydict.EasyDict({"img_size": 448,
 
-                           "train_txt_path": "D:/[1]DB/[5]4th_paper_DB/Fruit/apple_pear/New/train_fix.txt",
+                           "train_txt_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/train_fix.txt",
 
-                           "test_txt_path": "D:/[1]DB/[5]4th_paper_DB/Fruit/apple_pear/New/test.txt",
+                           "test_txt_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/test.txt",
                            
-                           "tr_label_path": "D:/[1]DB/[5]4th_paper_DB/Fruit/apple_pear/New/aug_train_lab/",
+                           "tr_label_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/aug_train_lab/",
                            
-                           "tr_image_path": "D:/[1]DB/[5]4th_paper_DB/Fruit/apple_pear/New/aug_train_img/",
+                           "tr_image_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/aug_train_img/",
 
-                           "te_label_path": "D:/[1]DB/[5]4th_paper_DB/Fruit/apple_pear/New/All_labels/",
+                           "te_label_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/All_labels/",
                            
-                           "te_image_path": "D:/[1]DB/[5]4th_paper_DB/Fruit/apple_pear/New/All_images/",
+                           "te_image_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/All_images/",
                            
                            "pre_checkpoint": False,
                            
                            "pre_checkpoint_path": "C:/Users/Yuhwan/Downloads/398/398",
                            
-                           "lr": 0.0001,
+                           "lr": 3e-4,
 
                            "min_lr": 1e-7,
                            
@@ -38,11 +39,11 @@ FLAGS = easydict.EasyDict({"img_size": 512,
 
                            "batch_size": 2,
 
-                           "sample_images": "C:/Users/Yuhwan/Downloads/tt",
+                           "sample_images": "/yuhwan/Edisk/yuhwan/Edisk/Segmentation/6th_paper/proposed_method/Apple_A/sample_images",
 
-                           "save_checkpoint": "C:/Users/Yuhwan/Downloads/tt",
+                           "save_checkpoint": "/yuhwan/Edisk/yuhwan/Edisk/Segmentation/6th_paper/proposed_method/Apple_A/checkpoint",
 
-                           "save_print": "C:/Users/Yuhwan/Downloads/train_out.txt",
+                           "save_print": "/yuhwan/Edisk/yuhwan/Edisk/Segmentation/6th_paper/proposed_method/Apple_A/train_out.txt",
 
                            "train_loss_graphs": "/yuwhan/Edisk/yuwhan/Edisk/Segmentation/V2/BoniRob/train_loss.txt",
 
@@ -141,8 +142,8 @@ def binary_focal_loss(gamma=2., alpha=.25):
 
 def iou_loss_fn(y_true, y_pred):
 
-    y_true = tf.reshape(y_true, [-1])
-    y_pred = tf.reshape(y_pred, [-1])
+    y_true = tf.reshape(y_true, [-1,])
+    y_pred = tf.reshape(y_pred, [-1,])
 
     y_pred = tf.cast(tf.nn.sigmoid(y_pred), tf.float32)
     y_true = tf.cast(y_true, y_pred.dtype)
@@ -158,10 +159,9 @@ def iou_loss_fn(y_true, y_pred):
 def MS_SSIM_fn(y_true, y_pred):
 
     y_true = tf.cast(y_true, tf.float32)
-    y_pred = tf.where(tf.nn.sigmoid(y_pred) >= 0.5, 1, 0)
     y_pred = tf.cast(y_pred, tf.float32)
     
-    tf_ms_ssim = tf.image.ssim_multiscale(y_true, y_pred, max_val=[0,1],k1=0.01**2, k2=0.03**2)
+    tf_ms_ssim = tf.image.ssim_multiscale(y_true, y_pred, max_val=[0.,1.],k1=0.01**2, k2=0.03**2)
     
     loss = 1 - tf_ms_ssim
     
@@ -169,9 +169,9 @@ def MS_SSIM_fn(y_true, y_pred):
 
 def hybrid_loss(y_true, y_pred, alpha):
 
-    focal_loss = binary_focal_loss(alpha=alpha)(tf.reshape(y_true, [-1]), tf.nn.sigmoid(tf.reshape(y_pred, [-1])))  # for CGM
+    focal_loss = binary_focal_loss(alpha=alpha)(tf.reshape(y_true, [-1,]), tf.nn.sigmoid(tf.reshape(y_pred, [-1,])))  # for CGM
     iou_loss = iou_loss_fn(y_true, y_pred)  # Saptial loss
-    MS_SSIM_loss = MS_SSIM_fn(y_true, y_pred) # enhance the boundary
+    MS_SSIM_loss = MS_SSIM_fn(y_true, tf.nn.sigmoid(y_pred)) # enhance the boundary
 
     return focal_loss + iou_loss + MS_SSIM_loss
 
@@ -184,11 +184,11 @@ def cal_loss(model, batch_images, batch_labels, object_buf):
     with tf.GradientTape() as tape:
         final, sub_1, sub_2, sub_3, sub_4 = run_model(model, batch_images, True)
 
-        loss_1 = hybrid_loss(batch_labels, sub_1, object_buf[1])
-        loss_2 = hybrid_loss(batch_labels, sub_2, object_buf[1])
-        loss_3 = hybrid_loss(batch_labels, sub_3, object_buf[1])
-        loss_4 = hybrid_loss(batch_labels, sub_4, object_buf[1])
-        loss_5 = hybrid_loss(batch_labels, final, object_buf[1])
+        loss_1 = hybrid_loss(batch_labels, sub_1, object_buf[1]) * 0.25
+        loss_2 = hybrid_loss(batch_labels, sub_2, object_buf[1]) * 0.25
+        loss_3 = hybrid_loss(batch_labels, sub_3, object_buf[1]) * 0.25
+        loss_4 = hybrid_loss(batch_labels, sub_4, object_buf[1]) * 0.25
+        loss_5 = hybrid_loss(batch_labels, final, object_buf[1]) * 1
 
         total_loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_5
 
