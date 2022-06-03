@@ -28,7 +28,7 @@ FLAGS = easydict.EasyDict({"img_size": 512,
                            
                            "pre_checkpoint_path": "C:/Users/Yuhwan/Downloads/398/398",
                            
-                           "lr": 0.0001,
+                           "lr": 0.00001,
 
                            "min_lr": 1e-7,
                            
@@ -182,13 +182,12 @@ def true_dice_loss(y_true, y_pred):
 
 def hybrid_loss(y_true, y_pred, alpha):
 
-    focal_loss = binary_focal_loss(alpha=alpha)(tf.reshape(y_true, [-1,]), tf.nn.sigmoid(tf.reshape(y_pred, [-1,])))  # for CGM
+    focal_loss = binary_focal_loss(alpha=alpha)(tf.reshape(y_true, [-1,]), tf.nn.sigmoid(tf.reshape(y_pred, [-1,])))
     iou_loss = iou_loss_fn(y_true, y_pred)  # Saptial loss
     #MS_SSIM_loss = MS_SSIM_fn(y_true, tf.nn.sigmoid(y_pred)) # enhance the boundary
     dice_loss = true_dice_loss(y_true, y_pred)
 
     return focal_loss + iou_loss + dice_loss
-
 
 def run_model(model, images, training=True):
     return model(images, training=training)
@@ -205,10 +204,11 @@ def cal_loss(model, batch_images, batch_labels, object_buf):
         loss_4 = hybrid_loss(batch_labels, sub_4, object_buf[1]) * 0.0625
         loss_5 = hybrid_loss(batch_labels, final, object_buf[1]) * 1
 
-        temp_labels = tf.ones([FLAGS.batch_size], tf.int32)
-        bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)(temp_labels, cls_branch_max)
+        # temp_labels = tf.ones([FLAGS.batch_size], tf.int32)
+        bce_loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)([1, 1], cls_branch_max)
+        # bce_loss = tf.reduce_mean(-tf.math.log(cls_branch_max + tf.keras.backend.epsilon()))
 
-        total_loss = bce_loss + loss_1 + loss_2 + loss_3 + loss_4 + loss_5
+        total_loss = loss_1 + loss_2 + loss_3 + loss_4 + loss_5 + bce_loss
 
     grads = tape.gradient(total_loss, model.trainable_variables)
     optim.apply_gradients(zip(grads, model.trainable_variables))
