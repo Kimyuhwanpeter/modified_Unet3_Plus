@@ -269,7 +269,3 @@ def Unet3_plus_modified(input_shape=(512, 512, 3), nclasses=1):
                                                   d4,
                                                   d5,
                                                   cls_branch_max])
-mo = Unet3_plus_modified()
-prob = model_profiler(mo, 2)
-mo.summary()
-print(prob)
