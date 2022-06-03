@@ -178,6 +178,8 @@ def true_dice_loss(y_true, y_pred):
     numerator = 2 * tf.reduce_sum(y_true * y_pred)
     denominator = tf.reduce_sum(y_true + y_pred)
 
+    return 1 - tf.math.divide(numerator, denominator)
+
 def hybrid_loss(y_true, y_pred, alpha):
 
     focal_loss = binary_focal_loss(alpha=alpha)(tf.reshape(y_true, [-1,]), tf.nn.sigmoid(tf.reshape(y_pred, [-1,])))  # for CGM
@@ -194,6 +196,7 @@ def run_model(model, images, training=True):
 def cal_loss(model, batch_images, batch_labels, object_buf):
 
     with tf.GradientTape() as tape:
+        
         final, sub_1, sub_2, sub_3, sub_4, cls_branch_max = run_model(model, batch_images, True)
         
         loss_1 = hybrid_loss(batch_labels, sub_1, object_buf[1]) * 0.5
