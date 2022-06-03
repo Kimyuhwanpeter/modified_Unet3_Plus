@@ -28,7 +28,7 @@ FLAGS = easydict.EasyDict({"img_size": 512,
                            
                            "pre_checkpoint_path": "C:/Users/Yuhwan/Downloads/398/398",
                            
-                           "lr": 0.00001,
+                           "lr": 0.000001,
 
                            "min_lr": 1e-7,
                            
