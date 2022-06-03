@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
-from model_15 import *
-from random import random, shuffle
+from random import shuffle, random
+# from tree_model import *
+from model_17_colab import *
 from tensorflow.keras import backend as K
 from Cal_measurement import *
 
@@ -9,25 +10,25 @@ import numpy as np
 import easydict
 import os
 
-FLAGS = easydict.EasyDict({"img_size": 448,
+FLAGS = easydict.EasyDict({"img_size": 512,
 
-                           "train_txt_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/train_fix.txt",
+                           "train_txt_path": "/content/train_fix.txt",
 
-                           "test_txt_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/test.txt",
+                           "test_txt_path": "/content/test.txt",
                            
-                           "tr_label_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/aug_train_lab/",
+                           "tr_label_path": "/content/aug_train_lab/",
                            
-                           "tr_image_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/aug_train_img/",
+                           "tr_image_path": "/content/aug_train_img/",
 
-                           "te_label_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/All_labels/",
+                           "te_label_path": "/content/All_labels/",
                            
-                           "te_image_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/All_images/",
+                           "te_image_path": "/content/All_images/",
                            
                            "pre_checkpoint": False,
                            
                            "pre_checkpoint_path": "C:/Users/Yuhwan/Downloads/398/398",
                            
-                           "lr": 3e-4,
+                           "lr": 0.0001,
 
                            "min_lr": 1e-7,
                            
@@ -39,11 +40,11 @@ FLAGS = easydict.EasyDict({"img_size": 448,
 
                            "batch_size": 2,
 
-                           "sample_images": "/yuhwan/Edisk/yuhwan/Edisk/Segmentation/6th_paper/proposed_method/Apple_A/sample_images",
+                           "sample_images": "/content/drive/MyDrive/6th_paper/sample_images",
 
-                           "save_checkpoint": "/yuhwan/Edisk/yuhwan/Edisk/Segmentation/6th_paper/proposed_method/Apple_A/checkpoint",
+                           "save_checkpoint": "/content/drive/MyDrive/6th_paper/checkpoint",
 
-                           "save_print": "/yuhwan/Edisk/yuhwan/Edisk/Segmentation/6th_paper/proposed_method/Apple_A/train_out.txt",
+                           "save_print": "/content/drive/MyDrive/6th_paper/train_out.txt",
 
                            "train_loss_graphs": "/yuwhan/Edisk/yuwhan/Edisk/Segmentation/V2/BoniRob/train_loss.txt",
 
@@ -168,6 +169,10 @@ def MS_SSIM_fn(y_true, y_pred):
     return tf.reduce_mean(loss)
 
 def true_dice_loss(y_true, y_pred):
+
+    y_true = tf.reshape(y_true, [-1,])
+    y_pred = tf.reshape(y_pred, [-1,])
+
     y_true = tf.cast(y_true, tf.float32)
     y_pred = tf.math.sigmoid(y_pred)
     numerator = 2 * tf.reduce_sum(y_true * y_pred)
