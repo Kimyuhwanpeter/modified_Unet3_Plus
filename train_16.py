@@ -9,7 +9,7 @@ import numpy as np
 import easydict
 import os
 
-FLAGS = easydict.EasyDict({"img_size": 448,
+FLAGS = easydict.EasyDict({"img_size": 320,
 
                            "train_txt_path": "/yuhwan/yuhwan/Dataset/Segmentation/Apple_A/train_fix.txt",
 
@@ -27,7 +27,7 @@ FLAGS = easydict.EasyDict({"img_size": 448,
                            
                            "pre_checkpoint_path": "C:/Users/Yuhwan/Downloads/398/398",
                            
-                           "lr": 3e-4,
+                           "lr": 0.0001,
 
                            "min_lr": 1e-7,
                            
@@ -39,11 +39,11 @@ FLAGS = easydict.EasyDict({"img_size": 448,
 
                            "batch_size": 2,
 
-                           "sample_images": "/yuhwan/Edisk/yuhwan/Edisk/Segmentation/6th_paper/proposed_method/Apple_A/sample_images",
+                           "sample_images": "/yuhwan/yuhwan/checkpoint/Segmenation/6th_paper/Apple_A/sample_images",
 
-                           "save_checkpoint": "/yuhwan/Edisk/yuhwan/Edisk/Segmentation/6th_paper/proposed_method/Apple_A/checkpoint",
+                           "save_checkpoint": "/yuhwan/yuhwan/checkpoint/Segmenation/6th_paper/Apple_A/checkpoint",
 
-                           "save_print": "/yuhwan/Edisk/yuhwan/Edisk/Segmentation/6th_paper/proposed_method/Apple_A/train_out.txt",
+                           "save_print": "/yuhwan/yuhwan/checkpoint/Segmenation/6th_paper/Apple_A/train_out.txt",
 
                            "train_loss_graphs": "/yuwhan/Edisk/yuwhan/Edisk/Segmentation/V2/BoniRob/train_loss.txt",
 
@@ -168,10 +168,16 @@ def MS_SSIM_fn(y_true, y_pred):
     return tf.reduce_mean(loss)
 
 def true_dice_loss(y_true, y_pred):
+    
+    y_true = tf.reshape(y_true, [-1,])
+    y_pred = tf.reshape(y_pred, [-1,])
+    
     y_true = tf.cast(y_true, tf.float32)
     y_pred = tf.math.sigmoid(y_pred)
     numerator = 2 * tf.reduce_sum(y_true * y_pred)
     denominator = tf.reduce_sum(y_true + y_pred)
+    
+    return 1 - tf.math.divide(numerator, denominator)
 
 def hybrid_loss(y_true, y_pred, alpha):
 
