@@ -159,13 +159,14 @@ def iou_loss_fn(y_true, y_pred):
 def MS_SSIM_fn(y_true, y_pred):
 
     y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.where(y_pred >= 0.5, 1., 0.)
     y_pred = tf.cast(y_pred, tf.float32)
     
-    tf_ms_ssim = tf.image.ssim_multiscale(y_true, y_pred, max_val=[0.,1.],k1=0.01**2, k2=0.03**2)
+    tf_ms_ssim = tf.image.ssim_multiscale(y_true, y_pred, max_val=1.0, k1=0.01**2, k2=0.03**2)
     
-    loss = 1 - tf_ms_ssim
+    loss = 1 - tf.reduce_mean(tf_ms_ssim)
     
-    return tf.reduce_mean(loss)
+    return loss
 
 def hybrid_loss(y_true, y_pred, alpha):
 
