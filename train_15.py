@@ -195,7 +195,7 @@ def cal_loss(model, batch_images, batch_labels, object_buf):
     grads = tape.gradient(total_loss, model.trainable_variables)
     optim.apply_gradients(zip(grads, model.trainable_variables))
 
-    return loss
+    return total_loss
 
 def main():
 
