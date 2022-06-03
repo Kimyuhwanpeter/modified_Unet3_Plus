@@ -62,13 +62,11 @@ def Unet3_plus_modified(input_shape=(512, 512, 3), nclasses=1):
     h_5 = tf.keras.layers.BatchNormalization()(h_5)
     h_5 = tf.keras.layers.ReLU()(h_5)
 
-    cls_branch = tf.keras.layers.Dropout(0.5)(h_5)
+    cls_branch = tf.keras.layers.SpatialDropout2D(0.5)(h_5)
     cls_branch = tf.keras.layers.Conv2D(filters=2, kernel_size=1)(cls_branch)
     cls_branch = tf.keras.layers.GlobalMaxPool2D()(cls_branch)
     cls_branch = tf.nn.sigmoid(cls_branch)
-    cls_branch_max = tf.argmax(cls_branch, 1)
-    cls_branch_max = cls_branch_max[:, tf.newaxis]  # [B, 1]
-    cls_branch_max = tf.cast(cls_branch_max, tf.float32)
+    cls_branch_max = tf.keras.backend.max(cls_branch, -1)
 
     #####################################################################################
     h1_PT_hd4 = tf.keras.layers.MaxPool2D(8, 8)(h_1)
@@ -255,14 +253,20 @@ def Unet3_plus_modified(input_shape=(512, 512, 3), nclasses=1):
 
     d1 = tf.keras.layers.Conv2D(filters=nclasses, kernel_size=3, padding="same")(hd1)
 
-    d1 = dotProduct(d1, cls_branch_max) # Pixel attention
-    d2 = dotProduct(d2, cls_branch_max) # Pixel attention
-    d3 = dotProduct(d3, cls_branch_max) # Pixel attention
-    d4 = dotProduct(d4, cls_branch_max) # Pixel attention
-    d5 = dotProduct(d5, cls_branch_max) # Pixel attention
+    # d1 = dotProduct(d1, cls_branch_max) # Pixel attention   # this part is problem!!!!!!!!!!
+    # d2 = dotProduct(d2, cls_branch_max) # Pixel attention
+    # d3 = dotProduct(d3, cls_branch_max) # Pixel attention
+    # d4 = dotProduct(d4, cls_branch_max) # Pixel attention
+    # d5 = dotProduct(d5, cls_branch_max) # Pixel attention
 
-    return tf.keras.Model(inputs=inputs, outputs=[tf.nn.sigmoid(d1),
-                                                  tf.nn.sigmoid(d2),
-                                                  tf.nn.sigmoid(d3),
-                                                  tf.nn.sigmoid(d4),
-                                                  tf.nn.sigmoid(d5)])
+    d1 = tf.keras.layers.multiply([d1, cls_branch_max])
+    d2 = tf.keras.layers.multiply([d2, cls_branch_max])
+    d3 = tf.keras.layers.multiply([d3, cls_branch_max])
+    d4 = tf.keras.layers.multiply([d4, cls_branch_max])
+    d5 = tf.keras.layers.multiply([d5, cls_branch_max])
+
+    return tf.keras.Model(inputs=inputs, outputs=[d1,
+                                                  d2,
+                                                  d3,
+                                                  d4,
+                                                  d5])
