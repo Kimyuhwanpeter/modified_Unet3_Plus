@@ -27,7 +27,7 @@ FLAGS = easydict.EasyDict({"img_size": 576,
                            
                            "pre_checkpoint_path": "C:/Users/Yuhwan/Downloads/398/398",
                            
-                           "lr": 3e-4,
+                           "lr": 1e-4,
 
                            "min_lr": 1e-7,
                            
@@ -173,6 +173,8 @@ def true_dice_loss(y_true, y_pred):
     numerator = 2 * tf.reduce_sum(y_true * y_pred)
     denominator = tf.reduce_sum(y_true + y_pred)
 
+    return 1 - tf.math.divide(numerator, denominator)
+
 def false_dice_loss(y_true, y_pred):
     y_true = 1 - tf.cast(y_true, tf.float32)
     y_pred = 1 - tf.math.sigmoid(y_pred)
@@ -242,7 +244,7 @@ def cal_loss(model, images, labels_1, labels_2, labels_3, labels_4, object_buf):
 
 def main():
 
-    model = modified_Unet_patch(input_shape=(FLAGS.img_size, FLAGS.img_size, 3), nclasses=1)
+    model = modified_Unet_patch(input_shape=(FLAGS.img_size, FLAGS.img_size, 3))
     model_prob = model_profiler(model, FLAGS.batch_size)
     model.summary()
     print(model_prob)
